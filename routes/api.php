@@ -6,12 +6,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\UserAuthController;
 
-// auth route 
+// admin auth route 
 Route::post('register', [AuthController::class, 'register']);
-Route::post('login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout']);
-});
+Route::post('login', [AuthController::class, 'login']); 
 
 // product route 
 Route::apiResource('products', ProductController::class);
@@ -21,9 +18,12 @@ Route::apiResource('orders', OrderController::class);
 
 // User Authentication REST API
 Route::post('/users/register', [UserAuthController::class, 'store']); // POST /users/register
-Route::post('/users/login', [UserAuthController::class, 'login']); 
+Route::post('/users/login', [UserAuthController::class, 'login']);  
 
-
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [UserAuthController::class, 'me']);
+    Route::post('/logout', [UserAuthController::class, 'logout']);
+});
 
 
 

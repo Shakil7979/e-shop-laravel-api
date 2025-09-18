@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 class UserAuthController extends Controller
 {
     /**
-     * List all users (Optional, admin only)
+     * 🔹 List all users (Admin only - optional)
      */
     public function index()
     {
@@ -20,41 +20,41 @@ class UserAuthController extends Controller
     }
 
     /**
-     * Register a new user
+     * 🔹 Register a new user
      */
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
-            'role' => 'nullable|string|in:user,admin' // optional, default user
+            'role'     => 'nullable|string|in:user,admin'
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role ?? 'user'
+            'role'     => $request->role ?? 'user'
         ]);
 
         $token = $user->createToken('user-token')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'message' => 'User registered successfully',
-            'user' => $user,
-            'token' => $token
+            'message' => '✅ User registered successfully',
+            'user'    => $user,
+            'token'   => $token
         ], 201);
     }
 
     /**
-     * User login
+     * 🔹 User login
      */
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required|string',
         ]);
 
@@ -63,41 +63,56 @@ class UserAuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid credentials'
+                'message' => '❌ Invalid credentials'
             ], 401);
         }
+
+        // remove old tokens (optional security)
+        $user->tokens()->delete();
 
         $token = $user->createToken('user-token')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'message' => 'Login successful',
-            'user' => $user,
-            'token' => $token
+            'message' => '✅ Login successful',
+            'user'    => $user,
+            'token'   => $token
         ]);
     }
 
     /**
-     * Show specific user
+     * 🔹 Get logged-in user info
      */
-    public function show(string $id)
+    public function me(Request $request)
     {
-        $user = User::findOrFail($id);
-        return response()->json($user);
+        return response()->json($request->user());
     }
 
     /**
-     * Update user (Optional)
+     * 🔹 Logout user
+     */
+    public function logout(Request $request)
+    {
+        $request->user()->tokens()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => '🚪 Logged out successfully'
+        ]);
+    }
+
+    /**
+     * 🔹 Update user (optional - profile update or admin)
      */
     public function update(Request $request, string $id)
     {
         $user = User::findOrFail($id);
 
         $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'name'     => 'sometimes|string|max:255',
+            'email'    => 'sometimes|email|unique:users,email,' . $user->id,
             'password' => 'sometimes|string|min:6',
-            'role' => 'sometimes|string|in:user,admin'
+            'role'     => 'sometimes|string|in:user,admin'
         ]);
 
         if ($request->has('password')) {
@@ -108,13 +123,13 @@ class UserAuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'User updated',
-            'user' => $user
+            'message' => '✅ User updated',
+            'user'    => $user
         ]);
     }
 
     /**
-     * Delete user
+     * 🔹 Delete user (optional - admin)
      */
     public function destroy(string $id)
     {
@@ -123,7 +138,7 @@ class UserAuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'User deleted'
+            'message' => '🗑️ User deleted'
         ]);
     }
 }
